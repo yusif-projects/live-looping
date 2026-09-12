@@ -1,0 +1,41 @@
+name: Build
+description: Install, check and build the app — the one recipe every workflow runs.
+
+# A composite action rather than a reusable workflow: these steps run inside the
+# caller's job, so `dist/` is still there afterwards. deploy.yml uploads it as a
+# Pages artifact and release.yml zips it; a reusable workflow would run in its own
+# job and force both through an artifact round-trip for nothing.
+#
+# Checkout stays with the caller — deploy.yml checks out a chosen `ref`, and other
+# workflows need their own fetch depth.
+
+inputs:
+  node-version:
+    description: Node version to build with
+    required: false
+    default: '22'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+
+    - run: npm ci
+      shell: bash
+
+    - run: npm run lint
+      shell: bash
+
+    # Cheap ahead of the build: it writes the buildinfo that `npm run build`'s own
+    # `tsc -b` then reads, so the type pass runs once and fails on its own line.
+    - run: npm run typecheck
+      shell: bash
+
+    - run: npm run build
+      shell: bash
+
+    - run: npm test
+      shell: bash

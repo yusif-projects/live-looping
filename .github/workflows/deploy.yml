@@ -1,0 +1,71 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Tag, branch, or commit SHA to deploy — leave empty for the selected branch'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - run: echo "Deploying $(git describe --tags --always) ($(git rev-parse --short HEAD))" >> "$GITHUB_STEP_SUMMARY"
+      # install, lint, typecheck, build, test — see .github/actions/build
+      - uses: ./.github/actions/build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Every deploy that actually reached the site becomes a restore point.
+  # Skipped for workflow_dispatch, so a rollback never tags old code as new.
+  tag:
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Release this deploy as the version its commits ask for
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # feat: -> minor, ! or BREAKING CHANGE: -> major, anything else -> patch
+          next=$(node scripts/next-version.mjs)
+          echo "Tagged \`$next\` at \`${GITHUB_SHA:0:7}\`" >> "$GITHUB_STEP_SUMMARY"
+          gh release create "$next" \
+            --target "$GITHUB_SHA" \
+            --title "$next" \
+            --generate-notes

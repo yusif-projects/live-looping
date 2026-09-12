@@ -23,11 +23,25 @@ cheap. There are no DOM tests. Tests live in `src/__tests__/` and run in Node.
 | Suite | Covers |
 | --- | --- |
 | [commitMessage.test.ts](../src/__tests__/commitMessage.test.ts) | The commit-message grammar and the version it implies — header parts, unknown types, sentence case, trailing periods, the length limit, the blank line a body needs, the breaking-change footer, git's own merge/revert/fixup messages, and `nextVersion` moving major, minor or patch |
+| [transport.test.ts](../src/__tests__/transport.test.ts) | Bar and beat times, the next bar boundary including float edges, loop phase before its start bar, take planning on a stopped and a running transport |
+| [take.test.ts](../src/__tests__/take.test.ts) | Slicing across chunk boundaries, silence for uncaptured frames, channel fill, edge fades |
+| [notes.test.ts](../src/__tests__/notes.test.ts) | A4 = 440 Hz tuning, note names with sharps and flats, the offered range |
+| [videoSync.test.ts](../src/__tests__/videoSync.test.ts) | Clip time, the dead band, rate nudge direction and cap, seek on large drift |
+| [panels.test.ts](../src/__tests__/panels.test.ts) | Panel limits, one take at a time, stages never stepping back, locks while a loop exists |
+| [settings.test.ts](../src/__tests__/settings.test.ts) | Defaults for missing or corrupt data, clamping, `null` note vs an invalid one |
+| [project.test.ts](../src/__tests__/project.test.ts) | Round trip, version rejection, field repair, panels whose media is gone |
+| [exportPlan.test.ts](../src/__tests__/exportPlan.test.ts) | Export length and start bar, grid layout, cover crop |
+| [cycle.test.ts](../src/__tests__/cycle.test.ts) | The readout's cycle from recorded loops or chosen lengths, wrapping, bar 1 on the longest loop's start |
+| [mime.test.ts](../src/__tests__/mime.test.ts) | Container preference and file extensions |
 
 `commitMessage.test.ts` reaches out of `src/` into [scripts/](../scripts/) — the
 two commit scripts are plain ESM with pure exports.
 
-**What to add a test for:** TODO — the modules whose bugs are silent.
+**What to add a test for:** timing and sample math (`audio/transport.ts`,
+`audio/take.ts`), anything that parses stored data (`state/settings.ts`,
+`storage/project.ts`), and state transitions (`state/panels.ts`). A bug in any of those
+is inaudible until loops drift or a saved project fails to load. Keep new logic in those
+pure modules so it stays testable.
 
 **What not to bother with:** presentational React components. Test those by
 running the app.

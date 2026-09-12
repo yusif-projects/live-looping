@@ -1,0 +1,107 @@
+import type { DeviceLists } from '../media/devices'
+import type { Settings } from '../state/settings'
+import { LATENCY_OFFSET_RANGE_MS, VIDEO_OFFSET_RANGE_MS } from '../state/settings'
+
+// Chromium lists these as extra entries that alias whichever real device is the system
+// default. "System default" already covers them.
+const ALIAS_IDS = new Set(['default', 'communications'])
+
+interface DeviceBarProps {
+  readonly devices: DeviceLists
+  readonly settings: Settings
+  readonly speakerSupported: boolean
+  readonly disabled: boolean
+  onSettings(patch: Partial<Settings>): void
+}
+
+interface DeviceSelectProps {
+  readonly label: string
+  readonly devices: readonly MediaDeviceInfo[]
+  readonly value: string | null
+  readonly disabled: boolean
+  onChange(deviceId: string | null): void
+}
+
+function DeviceSelect({ label, devices, value, disabled, onChange }: DeviceSelectProps) {
+  const options = devices.filter((d) => !ALIAS_IDS.has(d.deviceId))
+  // A remembered device that's unplugged shows as the default, which is what is actually in use.
+  const selected = options.some((d) => d.deviceId === value) ? (value ?? '') : ''
+  return (
+    <label className="field device-field">
+      <span className="field-label">{label}</span>
+      <select value={selected} disabled={disabled} onChange={(e) => onChange(e.target.value || null)}>
+        <option value="">System default</option>
+        {options.map((d, i) => (
+          <option key={d.deviceId} value={d.deviceId}>
+            {d.label || `${label} ${i + 1}`}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+export function DeviceBar({ devices, settings, speakerSupported, disabled, onSettings }: DeviceBarProps) {
+  return (
+    <section className="devices" aria-label="Devices">
+      <DeviceSelect
+        label="Camera"
+        devices={devices.cameras}
+        value={settings.cameraId}
+        disabled={disabled}
+        onChange={(cameraId) => onSettings({ cameraId })}
+      />
+      <DeviceSelect
+        label="Microphone"
+        devices={devices.mics}
+        value={settings.micId}
+        disabled={disabled}
+        onChange={(micId) => onSettings({ micId })}
+      />
+      {speakerSupported && (
+        <DeviceSelect
+          label="Speaker"
+          devices={devices.speakers}
+          value={settings.speakerId}
+          disabled={disabled}
+          onChange={(speakerId) => onSettings({ speakerId })}
+        />
+      )}
+      <details className="sync">
+        <summary>Sync</summary>
+        <div className="sync-body">
+          <label className="field">
+            <span className="field-label">
+              Audio latency <output>{settings.latencyOffsetMs} ms</output>
+            </span>
+            <input
+              type="range"
+              min={-LATENCY_OFFSET_RANGE_MS}
+              max={LATENCY_OFFSET_RANGE_MS}
+              step={1}
+              value={settings.latencyOffsetMs}
+              onChange={(e) => onSettings({ latencyOffsetMs: Number(e.target.value) })}
+            />
+          </label>
+          <label className="field">
+            <span className="field-label">
+              Video offset <output>{settings.videoOffsetMs} ms</output>
+            </span>
+            <input
+              type="range"
+              min={-VIDEO_OFFSET_RANGE_MS}
+              max={VIDEO_OFFSET_RANGE_MS}
+              step={1}
+              value={settings.videoOffsetMs}
+              onChange={(e) => onSettings({ videoOffsetMs: Number(e.target.value) })}
+            />
+          </label>
+          <p className="hint">
+            If new loops land late against the click, raise audio latency. It applies to the next take. Video offset
+            moves picture against sound for every loop at once.
+          </p>
+        </div>
+      </details>
+    </section>
+  )
+}

@@ -2,7 +2,7 @@
 
 # 🔁 Live Looping
 
-**TODO: one-line pitch.**
+**Record video loops that play in time: count in, capture, stack up to sixteen.**
 
 [![CI](https://github.com/yusif-projects/live-looping/actions/workflows/ci.yml/badge.svg)](https://github.com/yusif-projects/live-looping/actions/workflows/ci.yml)
 [![Deploy](https://github.com/yusif-projects/live-looping/actions/workflows/deploy.yml/badge.svg)](https://github.com/yusif-projects/live-looping/actions/workflows/deploy.yml)
@@ -14,8 +14,14 @@
 
 ---
 
-TODO: a short paragraph on what Live Looping does and who it is for. Everything
-runs in the browser.
+Live Looping is a video looper for musicians.
+- Set a tempo, pick a camera, mic and speaker, and record clips into panels.
+- Each panel loops for its own number of bars (1 to 32), all locked to the same grid.
+- Before each take a count-in clicks and holds a reference note so you can tune.
+- Loops are saved in the browser, and any one of them, or all of them as a grid, exports to a
+  video file.
+
+Everything runs in the browser. Chrome or Edge gives the full feature set.
 
 ## Run it
 
@@ -35,7 +41,10 @@ npm run lint    # oxlint
 ## How it works
 
 ```
-TODO: an ASCII diagram of the main data flow
+mic ──► AudioWorklet (frame-stamped PCM) ──► cut to exact bars ──► looping AudioBuffer ──► speaker
+camera ──► MediaRecorder ──► clip ──► <video> per panel, corrected every frame to the heard time
+                     AudioContext clock ──► metronome · count-in tone · loop phase
+                     IndexedDB ◄──► project + takes          canvas + audio ──► exported video
 ```
 
 Details in [architecture](docs/ARCHITECTURE.md).

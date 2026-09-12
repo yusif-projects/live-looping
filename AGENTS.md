@@ -1,8 +1,14 @@
 # AGENTS.md
 
-Live Looping — a client-only React app. TODO: one paragraph on what it does and
-the main pieces it is built from. No backend, no server code anywhere in this
-repo.
+Live Looping — a client-only React app for recording video-and-audio loops that
+play in sync against one tempo. It has up to 16 panels, each looping its own number of
+bars, with a metronome, a count-in that holds a reference note, device pickers, and
+export to a video file. The Web Audio clock drives everything:
+- An AudioWorklet captures mic audio cut to the sample.
+- Looping buffer sources play it back.
+- `<video>` elements are corrected every frame to follow the heard time.
+
+Loops persist in IndexedDB. No backend, no server code anywhere in this repo.
 
 The documentation in [docs/](docs/) is the map. **Read the doc before grepping
 the source** — the routing table below says which one, and each doc links to
@@ -27,6 +33,13 @@ the exact files it describes.
 ```
 src/
 ├── __tests__/     pure-logic tests only                       → docs/CONTRIBUTING.md
+├── audio/         engine, transport math, recorder, worklet   → docs/ARCHITECTURE.md
+├── media/         devices, video sync, exporter, mime choice  → docs/ARCHITECTURE.md
+├── state/         panel reducer, settings, export geometry    → docs/CONFIGURATION.md
+├── storage/       project schema, IndexedDB                   → docs/CONFIGURATION.md
+├── lib/           small math helpers
+├── ui/            presentational components
+├── useLooper.ts   the one hook bridging engine and React      → docs/ARCHITECTURE.md
 ├── App.tsx        top-level wiring                            → docs/ARCHITECTURE.md
 ├── main.tsx       React root
 └── styles.css     the entire stylesheet

@@ -5,7 +5,8 @@
 | Thing | Why |
 | --- | --- |
 | Node 22+ | Matches the CI runner |
-| A modern desktop browser | TODO: list the browser APIs the app needs |
+| A modern desktop browser | Needs `getUserMedia`, `AudioWorklet`, `MediaRecorder`, `IndexedDB` and `canvas.captureStream`. Output selection also needs `AudioContext.setSinkId` (Chrome, Edge). |
+| A camera, a mic, headphones | The camera is optional (loops become audio-only); headphones keep speakers out of takes |
 
 ## Install and run
 
@@ -43,6 +44,13 @@ first commit after `npm install` — see
 ```
 src/
 ├── __tests__/     pure-logic tests
+├── audio/         engine, transport math, recorder, capture worklet
+├── media/         devices, video sync, exporter
+├── state/         panel reducer, settings, export geometry
+├── storage/       project schema, IndexedDB
+├── lib/           math helpers
+├── ui/            presentational components
+├── useLooper.ts   engine ↔ React bridge
 ├── App.tsx        top-level wiring
 ├── main.tsx       React root
 └── styles.css     the entire stylesheet

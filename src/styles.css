@@ -652,7 +652,8 @@ input[type='range'] {
 .meter-fill {
   height: 100%;
   background: var(--accent);
-  transition: width 100ms linear;
+  transform-origin: left;
+  transition: transform 100ms linear;
 }
 
 .dialog-actions {

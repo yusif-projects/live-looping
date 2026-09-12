@@ -16,7 +16,7 @@ export function ExportDialog({ label, progress, onCancel }: ExportDialogProps) {
           Export records in real time, one full cycle of the longest loop. Keep this tab in front until it finishes.
         </p>
         <div className="meter" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
-          <div className="meter-fill" style={{ width: `${percent}%` }} />
+          <div className="meter-fill" style={{ transform: `scaleX(${percent / 100})` }} />
         </div>
         <div className="dialog-actions">
           <span className="dialog-percent">{percent}%</span>

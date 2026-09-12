@@ -46,7 +46,7 @@ src/
 ├── __tests__/     pure-logic tests
 ├── audio/         engine, transport math, recorder, capture worklet
 ├── media/         devices, video sync, exporter
-├── state/         panel reducer, settings, export geometry
+├── state/         panel reducer, settings, loop cycle, export geometry
 ├── storage/       project schema, IndexedDB
 ├── lib/           math helpers
 ├── ui/            presentational components

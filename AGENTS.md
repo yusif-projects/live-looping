@@ -35,7 +35,7 @@ src/
 ├── __tests__/     pure-logic tests only                       → docs/CONTRIBUTING.md
 ├── audio/         engine, transport math, recorder, worklet   → docs/ARCHITECTURE.md
 ├── media/         devices, video sync, exporter, mime choice  → docs/ARCHITECTURE.md
-├── state/         panel reducer, settings, export geometry    → docs/CONFIGURATION.md
+├── state/         panel reducer, settings, cycle, export math → docs/CONFIGURATION.md
 ├── storage/       project schema, IndexedDB                   → docs/CONFIGURATION.md
 ├── lib/           small math helpers
 ├── ui/            presentational components

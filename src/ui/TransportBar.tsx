@@ -22,7 +22,7 @@ interface TransportBarProps {
   onSettings(patch: Partial<Settings>): void
   onExportAll(): void
   onClearAll(): void
-  /** Receives the bar.beat readout, which the frame loop writes to directly rather than re-rendering. */
+  /** Receives the bar-in-cycle readout, which the frame loop writes to directly rather than re-rendering. */
   registerBeatDisplay(el: HTMLElement | null): void
 }
 
@@ -91,7 +91,7 @@ export function TransportBar({
           <span className={running ? 'glyph glyph-stop' : 'glyph glyph-play'} aria-hidden="true" />
           {running ? 'Stop' : 'Play'}
         </button>
-        <output className="position" ref={registerBeatDisplay} aria-label="Bar and beat" />
+        <output className="position" ref={registerBeatDisplay} aria-label="Bar in loop cycle" />
       </div>
 
       <div className="transport-group">

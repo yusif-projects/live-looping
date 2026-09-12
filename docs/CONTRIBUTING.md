@@ -31,6 +31,7 @@ cheap. There are no DOM tests. Tests live in `src/__tests__/` and run in Node.
 | [settings.test.ts](../src/__tests__/settings.test.ts) | Defaults for missing or corrupt data, clamping, `null` note vs an invalid one |
 | [project.test.ts](../src/__tests__/project.test.ts) | Round trip, version rejection, field repair, panels whose media is gone |
 | [exportPlan.test.ts](../src/__tests__/exportPlan.test.ts) | Export length and start bar, grid layout, cover crop |
+| [cycle.test.ts](../src/__tests__/cycle.test.ts) | The readout's cycle from recorded loops or chosen lengths, wrapping, bar 1 on the longest loop's start |
 | [mime.test.ts](../src/__tests__/mime.test.ts) | Container preference and file extensions |
 
 `commitMessage.test.ts` reaches out of `src/` into [scripts/](../scripts/) — the

@@ -14,11 +14,12 @@ import {
   MAX_TEMPO,
   MIN_BEATS_PER_BAR,
   MIN_TEMPO,
+  barPosition,
   loopOffset,
   secondsPerBar,
   secondsPerBeat,
 } from './audio/transport'
-import { clamp, mod } from './lib/math'
+import { clamp } from './lib/math'
 import type { DeviceLists } from './media/devices'
 import {
   NO_DEVICES,
@@ -33,6 +34,7 @@ import {
 } from './media/devices'
 import { exportPanels, saveBlob } from './media/exporter'
 import { SEEK_THRESHOLD_SECONDS, correctVideo, expectedClipTime } from './media/videoSync'
+import { cycleLabel, loopCycle } from './state/cycle'
 import type { BarCount, Panel, TakeMeta } from './state/panels'
 import { MAX_PANELS, busyPanel, createPanel, isMeterLocked, panelsReducer } from './state/panels'
 import type { Settings } from './state/settings'
@@ -77,11 +79,6 @@ function readStoredSettings(): Settings {
 }
 
 const timestamp = (): string => new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
-
-function positionLabel(heard: number, origin: number, meter: Meter): string {
-  const beatIndex = Math.max(0, Math.floor((heard - origin) / secondsPerBeat(meter.tempo)))
-  return `${Math.floor(beatIndex / meter.beatsPerBar) + 1}.${mod(beatIndex, meter.beatsPerBar) + 1}`
-}
 
 function paintPanel(root: HTMLElement, panel: Panel, heard: number, origin: number | null, meter: Meter, plan: TakePlan | null) {
   const countdown = root.querySelector<HTMLElement>('.panel-countdown')
@@ -270,7 +267,11 @@ export function useLooper() {
       const heard = engine.heardTime()
       const display = beatDisplayRef.current
       if (display) {
-        const label = origin === null ? '–.–' : positionLabel(heard, origin, meter)
+        const cycle = loopCycle(panelsRef.current)
+        const label =
+          origin === null
+            ? `– / ${cycle.bars}`
+            : cycleLabel(Math.max(0, Math.floor(barPosition(heard, origin, meter))), cycle)
         if (display.textContent !== label) display.textContent = label
       }
       const active = activeTakeRef.current

@@ -29,7 +29,7 @@ the count-in or recording to stop the take. A loop you were re-recording comes b
 | Control | What it does |
 | --- | --- |
 | **Play / Stop** (or Space) | Starts and stops every loop together, from bar 1 |
-| Bar.beat readout | Where you are on the grid |
+| Bar readout (e.g. 3 / 8) | Which bar of the loop cycle is playing. It counts through the longest recorded loop and wraps back to 1; with nothing recorded, it follows the panels' lengths. |
 | **Tempo** | Beats per minute; type a value or use − and + |
 | **Meter** | Beats per bar |
 | **Click** On/Off and slider | Metronome while playing, and its volume. The count-in always clicks. |

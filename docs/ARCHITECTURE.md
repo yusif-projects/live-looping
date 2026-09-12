@@ -23,6 +23,7 @@ This page describes the code as it is now, not its history.
 | [state/panels.ts](../src/state/panels.ts) | Pure panel reducer: add/remove, record stages, lengths, mix |
 | [state/settings.ts](../src/state/settings.ts) | Pure settings schema, defaults, parsing and clamping |
 | [state/exportPlan.ts](../src/state/exportPlan.ts) | Pure export length, start bar, grid and crop geometry |
+| [state/cycle.ts](../src/state/cycle.ts) | Pure: the loop cycle the transport readout counts through, and its "3 / 8" label |
 | [storage/project.ts](../src/storage/project.ts) | Pure project schema and validation |
 | [storage/db.ts](../src/storage/db.ts) | IndexedDB wrapper for the project and recorded takes |
 | [lib/math.ts](../src/lib/math.ts) | `clamp`, a non-negative `mod`, `gcd`/`lcm` |
@@ -42,7 +43,7 @@ This page describes the code as it is now, not its history.
                          │                             IndexedDB ◄─ project + takes         │
                          │                                   │                              │
                          └─ heardTime() ─► useLooper rAF ─► <video> per panel (seek / rate) │
-                                                │          progress, countdown, bar.beat    │
+                                                │          progress, countdown, bar / cycle │
                                                 ▼                                           ▼
                                   exporter: canvas draws the synced videos + gated panel audio
                                                 └──────────► MediaRecorder ─► downloaded file
@@ -110,7 +111,7 @@ frame loop seeks when drift exceeds 120 ms (which also handles the wrap) and nud
 `playbackRate` by up to 10% for smaller drift. A seek is never issued while one is pending,
 because each new seek restarts it.
 
-**Per-frame work bypasses React.** Progress bars, countdowns and the bar.beat readout are
+**Per-frame work bypasses React.** Progress bars, countdowns and the bar-in-cycle readout are
 written straight to the DOM by one `requestAnimationFrame` loop in `useLooper`. Routing them
 through state would re-render sixteen panels sixty times a second.
 

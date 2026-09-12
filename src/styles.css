@@ -338,8 +338,9 @@ input[type='range'] {
   background: currentColor;
 }
 
+/* Wide enough for "32 / 32", so the controls beside it don't shift as the bar changes. */
 .position {
-  min-width: 5ch;
+  min-width: 7ch;
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   font-size: 24px;
   font-weight: 600;

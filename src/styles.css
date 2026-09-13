@@ -251,6 +251,28 @@ input[type='range'] {
   max-width: 100%;
 }
 
+/* The mic level runs along the inside bottom edge of its select, so the meter adds no height to the row. */
+.device-field {
+  position: relative;
+}
+
+.input-level {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+  transform: scaleX(var(--level, 0));
+  transform-origin: left;
+  pointer-events: none;
+}
+
+.input-level[data-hot] {
+  background: var(--record);
+}
+
 .sync {
   position: relative;
 }
@@ -446,6 +468,11 @@ input[type='range'] {
   opacity: 0.4;
 }
 
+/* An empty panel's camera is for framing, not a take yet, so it sits back until Record is pressed. */
+.panel[data-state='empty'] .panel-video {
+  opacity: 0.7;
+}
+
 .panel-empty {
   position: absolute;
   inset: 0;
@@ -478,21 +505,68 @@ input[type='range'] {
   animation: pulse 1s ease-in-out infinite;
 }
 
+/* Written every frame by useLooper: "Recording in 2 bars" over the beat dots, then 4 3 2 1 in the last bar. */
 .panel-countdown {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: clamp(48px, 7vw, 96px);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgb(0 0 0 / 25%);
   color: #fff;
   text-shadow: 0 2px 24px rgb(0 0 0 / 70%);
   pointer-events: none;
 }
 
-.panel-countdown:empty {
+/* The display above would otherwise override the hidden attribute. */
+.panel-countdown[hidden] {
   display: none;
+}
+
+.countdown-label {
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 600;
+}
+
+.countdown-beat {
+  display: none;
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-countdown[data-final] .countdown-label {
+  display: none;
+}
+
+.panel-countdown[data-final] .countdown-beat {
+  display: block;
+}
+
+.countdown-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.countdown-dots i {
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgb(255 255 255 / 70%);
+  border-radius: 50%;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 50%);
+}
+
+.countdown-dots i[data-on] {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.panel-countdown[data-final] .countdown-dots i[data-on] {
+  border-color: var(--record);
+  background: var(--record);
 }
 
 .panel-progress {

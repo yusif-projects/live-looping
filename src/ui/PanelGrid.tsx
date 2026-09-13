@@ -8,6 +8,7 @@ interface PanelGridProps {
   readonly videoUrls: ReadonlyMap<string, string>
   readonly cameraStream: MediaStream | null
   readonly globalNote: number | null
+  readonly beatsPerBar: number
   readonly busyPanelId: string | null
   readonly exporting: boolean
   readonly canAdd: boolean
@@ -27,8 +28,9 @@ export function PanelGrid(props: PanelGridProps) {
           panel={panel}
           number={i + 1}
           videoUrl={props.videoUrls.get(panel.id) ?? null}
-          liveStream={panel.stage ? props.cameraStream : null}
+          liveStream={panel.stage || !panel.take ? props.cameraStream : null}
           globalNote={props.globalNote}
+          beatsPerBar={props.beatsPerBar}
           recordDisabled={exporting || (busyPanelId !== null && busyPanelId !== panel.id)}
           canRemove={panels.length > 1 && panel.stage === null && !exporting}
           locked={exporting}

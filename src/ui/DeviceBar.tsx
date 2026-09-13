@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { DeviceLists } from '../media/devices'
 import type { Settings } from '../state/settings'
 import { LATENCY_OFFSET_RANGE_MS, VIDEO_OFFSET_RANGE_MS } from '../state/settings'
@@ -12,6 +13,8 @@ interface DeviceBarProps {
   readonly speakerSupported: boolean
   readonly disabled: boolean
   onSettings(patch: Partial<Settings>): void
+  /** Receives the input level bar, which the frame loop writes to directly rather than re-rendering. */
+  registerLevel(el: HTMLElement | null): void
 }
 
 interface DeviceSelectProps {
@@ -19,10 +22,12 @@ interface DeviceSelectProps {
   readonly devices: readonly MediaDeviceInfo[]
   readonly value: string | null
   readonly disabled: boolean
+  /** Drawn over the select, such as the microphone's level bar. */
+  readonly children?: ReactNode
   onChange(deviceId: string | null): void
 }
 
-function DeviceSelect({ label, devices, value, disabled, onChange }: DeviceSelectProps) {
+function DeviceSelect({ label, devices, value, disabled, children, onChange }: DeviceSelectProps) {
   const options = devices.filter((d) => !ALIAS_IDS.has(d.deviceId))
   // A remembered device that's unplugged shows as the default, which is what is actually in use.
   const selected = options.some((d) => d.deviceId === value) ? (value ?? '') : ''
@@ -37,11 +42,12 @@ function DeviceSelect({ label, devices, value, disabled, onChange }: DeviceSelec
           </option>
         ))}
       </select>
+      {children}
     </label>
   )
 }
 
-export function DeviceBar({ devices, settings, speakerSupported, disabled, onSettings }: DeviceBarProps) {
+export function DeviceBar({ devices, settings, speakerSupported, disabled, onSettings, registerLevel }: DeviceBarProps) {
   return (
     <section className="devices" aria-label="Devices">
       <DeviceSelect
@@ -57,7 +63,33 @@ export function DeviceBar({ devices, settings, speakerSupported, disabled, onSet
         value={settings.micId}
         disabled={disabled}
         onChange={(micId) => onSettings({ micId })}
-      />
+      >
+        <span className="input-level" ref={registerLevel} aria-hidden="true" />
+      </DeviceSelect>
+      {/* Not locked with the devices: the middle of a take is exactly when monitoring needs adjusting. */}
+      <div className="field" title="Hear the microphone as you play. Use headphones: speakers feed back into the mic.">
+        <span className="field-label">Monitor</span>
+        <div className="inline">
+          <button
+            className="toggle"
+            aria-pressed={settings.monitorOn}
+            onClick={() => onSettings({ monitorOn: !settings.monitorOn })}
+          >
+            {settings.monitorOn ? 'On' : 'Off'}
+          </button>
+          <input
+            type="range"
+            className="volume"
+            aria-label="Monitor volume"
+            min={0}
+            max={1}
+            step={0.01}
+            value={settings.monitorVolume}
+            disabled={!settings.monitorOn}
+            onChange={(e) => onSettings({ monitorVolume: Number(e.target.value) })}
+          />
+        </div>
+      </div>
       {speakerSupported && (
         <DeviceSelect
           label="Speaker"

@@ -20,6 +20,9 @@ export interface Settings {
   /** MIDI note held during the count-in, or null for no tone. */
   readonly referenceNote: number | null
   readonly referenceVolume: number
+  /** Plays the mic straight to the output, so the player hears themselves in headphones. */
+  readonly monitorOn: boolean
+  readonly monitorVolume: number
   readonly cameraId: string | null
   readonly micId: string | null
   readonly speakerId: string | null
@@ -35,6 +38,9 @@ export const DEFAULT_SETTINGS: Settings = {
   countInBars: 1,
   referenceNote: DEFAULT_REFERENCE_NOTE,
   referenceVolume: 0.4,
+  // Off until asked for: through speakers, monitoring feeds straight back into the mic.
+  monitorOn: false,
+  monitorVolume: 0.8,
   cameraId: null,
   micId: null,
   speakerId: null,
@@ -75,6 +81,8 @@ export function parseSettings(stored: string | null): Settings {
     // null is a deliberate "no tone", distinct from a missing key.
     referenceNote: r.referenceNote === null ? null : isReferenceNote(r.referenceNote) ? r.referenceNote : DEFAULT_SETTINGS.referenceNote,
     referenceVolume: numberOr(r, 'referenceVolume', 0, 1),
+    monitorOn: booleanOr(r, 'monitorOn'),
+    monitorVolume: numberOr(r, 'monitorVolume', 0, 1),
     cameraId: deviceId(r.cameraId),
     micId: deviceId(r.micId),
     speakerId: deviceId(r.speakerId),

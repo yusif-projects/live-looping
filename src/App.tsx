@@ -58,6 +58,7 @@ export default function App() {
           speakerSupported={looper.speakerSupported}
           disabled={exporting || looper.busyPanelId !== null}
           onSettings={looper.updateSettings}
+          registerLevel={looper.registerLevel}
         />
       </header>
 
@@ -95,6 +96,7 @@ export default function App() {
           videoUrls={looper.videoUrls}
           cameraStream={looper.cameraStream}
           globalNote={looper.settings.referenceNote}
+          beatsPerBar={looper.beatsPerBar}
           busyPanelId={looper.busyPanelId}
           exporting={exporting}
           canAdd={looper.canAddPanel}

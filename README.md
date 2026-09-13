@@ -17,7 +17,9 @@
 Live Looping is a video looper for musicians.
 - Set a tempo, pick a camera, mic and speaker, and record clips into panels.
 - Each panel loops for its own number of bars (1 to 32), all locked to the same grid.
-- Before each take a count-in clicks and holds a reference note so you can tune.
+- Before each take a count-in clicks and holds a reference note so you can tune. It counts down
+  to the next bar where the new loop lines up with the loops already playing.
+- Empty panels preview the camera, and the mic can be monitored live, with a level meter.
 - Loops are saved in the browser, and any one of them, or all of them as a grid, exports to a
   video file.
 

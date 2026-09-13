@@ -136,7 +136,10 @@ export function TransportBar({
             />
           </div>
         </div>
-        <label className="field">
+        <label
+          className="field"
+          title="Used when no other loop is recorded. Otherwise a take counts in until the next bar where it lines up with the loops already there."
+        >
           <span className="field-label">Count-in</span>
           <select value={settings.countInBars} onChange={(e) => onSettings({ countInBars: Number(e.target.value) })}>
             {COUNT_IN_OPTIONS.map((n) => (

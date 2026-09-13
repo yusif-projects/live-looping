@@ -3,6 +3,7 @@ import {
   SCHEDULE_LEAD_SECONDS,
   barStartTime,
   beatAt,
+  countInDisplay,
   firstBeatIndexAtOrAfter,
   loopOffset,
   nextBarAtOrAfter,
@@ -52,7 +53,7 @@ describe('loopOffset', () => {
 
 describe('planTake', () => {
   it('starts a stopped transport just ahead of now', () => {
-    const plan = planTake(10, null, fourFour, 1, 4)
+    const plan = planTake(10, null, fourFour, 1, 4, null)
     expect(plan.origin).toBe(10 + SCHEDULE_LEAD_SECONDS)
     expect(plan.countInStartBar).toBe(0)
     expect(plan.countInStart).toBe(plan.origin)
@@ -62,7 +63,7 @@ describe('planTake', () => {
   })
 
   it('waits for the next bar on a running transport', () => {
-    const plan = planTake(2.5, 0, fourFour, 2, 1)
+    const plan = planTake(2.5, 0, fourFour, 2, 1, null)
     expect(plan.origin).toBe(0)
     expect(plan.countInStartBar).toBe(2)
     expect(plan.recordStartBar).toBe(4)
@@ -70,6 +71,63 @@ describe('planTake', () => {
   })
 
   it('skips a boundary too close to schedule', () => {
-    expect(planTake(3.95, 0, fourFour, 1, 1).countInStartBar).toBe(3)
+    expect(planTake(3.95, 0, fourFour, 1, 1, null).countInStartBar).toBe(3)
+  })
+})
+
+describe('planTake lined up with existing loops', () => {
+  // A 4-bar loop recorded from bar 1: its cycle starts on bars 1, 5, 9…
+  const anchoredOnBar1 = (stepBars: number) => ({ anchorBar: 1, stepBars })
+
+  it('starts a shorter loop on its own boundary instead of waiting out the long one', () => {
+    // Pressed in bar 2: a 2-bar take may start on bar 3 or 5, and bar 3 is too close to count a full bar.
+    const plan = planTake(4.5, 0, fourFour, 4, 2, anchoredOnBar1(2))
+    expect(plan.countInStartBar).toBe(3)
+    expect(plan.recordStartBar).toBe(5)
+    expect(plan.recordEnd).toBe(14)
+    // Pressed in bar 1, bar 3 leaves a full bar to count.
+    expect(planTake(3.5, 0, fourFour, 4, 2, anchoredOnBar1(2)).recordStartBar).toBe(3)
+  })
+
+  it('starts a 1-bar loop a bar after the count-in begins, ignoring the count-in setting', () => {
+    const plan = planTake(4.5, 0, fourFour, 4, 1, anchoredOnBar1(1))
+    expect(plan.recordStartBar).toBe(plan.countInStartBar + 1)
+  })
+
+  it('starts a longer loop on the existing cycle’s first bar', () => {
+    expect(planTake(10.5, 0, fourFour, 1, 8, anchoredOnBar1(4)).recordStartBar).toBe(9)
+  })
+
+  it('lines up on a stopped transport too', () => {
+    expect(planTake(10, null, fourFour, 1, 2, anchoredOnBar1(2)).recordStartBar).toBe(1)
+    expect(planTake(10, null, fourFour, 1, 4, { anchorBar: 3, stepBars: 4 }).recordStartBar).toBe(3)
+  })
+})
+
+describe('countInDisplay', () => {
+  // Pressed in bar 2 at 4.5 s: the count-in starts on bar 3 (6 s) and recording on bar 5 (10 s).
+  const plan = planTake(4.5, 0, fourFour, 1, 2, { anchorBar: 1, stepBars: 2 })
+
+  it('shows the bars left, reading the wait for the next bar as the first count-in bar', () => {
+    expect(countInDisplay(5, plan, fourFour)).toEqual({ barsLeft: 2, beat: null, beatsLeft: null })
+    expect(countInDisplay(6, plan, fourFour)).toEqual({ barsLeft: 2, beat: 0, beatsLeft: null })
+    expect(countInDisplay(7.6, plan, fourFour)).toEqual({ barsLeft: 2, beat: 3, beatsLeft: null })
+  })
+
+  it('counts the beats down in the last bar, then gives way to recording', () => {
+    expect([8, 8.5, 9, 9.5].map((t) => countInDisplay(t, plan, fourFour)?.beatsLeft)).toEqual([4, 3, 2, 1])
+    expect(countInDisplay(10, plan, fourFour)).toBeNull()
+  })
+
+  it('counts a beat that floating point lands a hair early as that beat', () => {
+    const meter = { tempo: 97, beatsPerBar: 7 }
+    const running = planTake(0, 0.1, meter, 1, 1, null)
+    const beats = Array.from({ length: 7 }, (_, i) => countInDisplay(beatAt(i, 0.1, meter).time, running, meter)?.beat)
+    expect(beats).toEqual([0, 1, 2, 3, 4, 5, 6])
+  })
+
+  it('shows no extra bar in the moment before a fresh origin', () => {
+    const stopped = planTake(10, null, fourFour, 1, 4, null)
+    expect(countInDisplay(10.05, stopped, fourFour)).toEqual({ barsLeft: 1, beat: null, beatsLeft: null })
   })
 })

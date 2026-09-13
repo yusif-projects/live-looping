@@ -56,6 +56,15 @@ instruments.
 
 **Fix:** use headphones.
 
+## Echo, feedback or a howl with Monitor on
+
+**Cause:** the monitored mic is coming out of speakers and back into the mic. Browsers also
+delay monitored sound by roughly 10–40 ms, which on its own can sound like a short echo.
+
+**Fix:** use wired headphones, or turn **Monitor** off and watch the level bar in the
+**Microphone** picker instead. The monitor signal itself is never recorded into loops or
+exports; only what speakers bleed into the mic is.
+
 ## The click stutters, or an export is choppy
 
 **Cause:** browsers throttle timers and animation frames in background tabs. The scheduler then

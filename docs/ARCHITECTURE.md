@@ -9,8 +9,9 @@ This page describes the code as it is now, not its history.
 | [main.tsx](../src/main.tsx) | Mounts the React root |
 | [App.tsx](../src/App.tsx) | Top-level wiring: start gate or app, Space to play and stop, confirmations before destructive actions |
 | [useLooper.ts](../src/useLooper.ts) | The only bridge between the engine and React: state, device streams, persistence, and the per-frame loop |
-| [audio/engine.ts](../src/audio/engine.ts) | Owns the `AudioContext`: transport, metronome scheduler, reference tone, looping players, mic capture tap, speaker routing |
-| [audio/transport.ts](../src/audio/transport.ts) | Pure bar-grid math: bar and beat times, loop phase, when a take's count-in and recording happen |
+| [audio/engine.ts](../src/audio/engine.ts) | Owns the `AudioContext`: transport, metronome scheduler, reference tone, looping players, mic capture tap, input monitor and level, speaker routing |
+| [audio/transport.ts](../src/audio/transport.ts) | Pure bar-grid math: bar and beat times, loop phase, when a take's count-in and recording happen, what the count-in overlay shows |
+| [audio/level.ts](../src/audio/level.ts) | Pure: input peak → decibel meter level, its smoothing and clip warning |
 | [audio/recorder.ts](../src/audio/recorder.ts) | One take: count-in, sample-accurate capture, the cut loop, the video clip |
 | [audio/capture.worklet.ts](../src/audio/capture.worklet.ts) | `AudioWorkletProcessor` that posts mic PCM stamped with its context frame |
 | [audio/captureProtocol.ts](../src/audio/captureProtocol.ts) | Names shared by the worklet and the engine |
@@ -23,7 +24,7 @@ This page describes the code as it is now, not its history.
 | [state/panels.ts](../src/state/panels.ts) | Pure panel reducer: add/remove, record stages, lengths, mix |
 | [state/settings.ts](../src/state/settings.ts) | Pure settings schema, defaults, parsing and clamping |
 | [state/exportPlan.ts](../src/state/exportPlan.ts) | Pure export length, start bar, grid and crop geometry |
-| [state/cycle.ts](../src/state/cycle.ts) | Pure: the loop cycle the transport readout counts through, and its "3 / 8" label |
+| [state/cycle.ts](../src/state/cycle.ts) | Pure: the loop cycle the transport readout counts through, its "3 / 8" label, and where a new take lines up with it |
 | [storage/project.ts](../src/storage/project.ts) | Pure project schema and validation |
 | [storage/db.ts](../src/storage/db.ts) | IndexedDB wrapper for the project and recorded takes |
 | [lib/math.ts](../src/lib/math.ts) | `clamp`, a non-negative `mod`, `gcd`/`lcm` |
@@ -49,6 +50,9 @@ This page describes the code as it is now, not its history.
                                                 └──────────► MediaRecorder ─► downloaded file
 ```
 
+The mic source also feeds a monitor gain into master, silent unless **Monitor** is on, and an
+analyser the frame loop reads for the level bar. Neither is on the capture or export path.
+
 ## Lifecycle
 
 **Load.** Settings are parsed from `localStorage` and one empty panel is created. The start
@@ -68,7 +72,10 @@ the frame loop.
 **Record.** `planTake` chooses the bars:
 - The count-in begins on the next bar boundary if the transport is running, or just ahead of
   now on a fresh grid if it's stopped.
-- Recording starts `countInBars` later.
+- If other panels hold loops, `takeAlignment` says where the new loop lines up with them: every
+  `gcd(its length, their cycle)` bars from where the longest one starts. Recording begins on the
+  first such bar at least one bar after the count-in begins.
+- With nothing to line up with, recording starts `countInBars` later.
 
 While the count-in runs:
 - The panel's old loop pauses.
@@ -111,8 +118,8 @@ frame loop seeks when drift exceeds 120 ms (which also handles the wrap) and nud
 `playbackRate` by up to 10% for smaller drift. A seek is never issued while one is pending,
 because each new seek restarts it.
 
-**Per-frame work bypasses React.** Progress bars, countdowns and the bar-in-cycle readout are
-written straight to the DOM by one `requestAnimationFrame` loop in `useLooper`. Routing them
+**Per-frame work bypasses React.** Progress bars, count-in overlays, the mic level bar and the
+bar-in-cycle readout are written straight to the DOM by one `requestAnimationFrame` loop in `useLooper`. Routing them
 through state would re-render sixteen panels sixty times a second.
 
 **Tempo and meter lock while any loop exists.** A take's length is baked into its samples, and
@@ -138,3 +145,15 @@ applied every frame, so it re-syncs existing loops live.
 **The capture worklet is bundled with `?worker&url`.** Vite builds it as a separate chunk and
 returns its URL for `audioWorklet.addModule`. It imports only `captureProtocol.ts`, because
 the worklet scope has no DOM.
+
+**A new take lines up with the longest loop, not just the next bar.** `takeAlignment` anchors on
+the longest loop's start, the bar the readout calls 1, and steps by `gcd(new length, cycle)`.
+A short loop enters at any of its own boundaries inside a long one instead of waiting out the
+whole cycle, and a longer loop starts on the cycle's first bar. Loop phase alone would stay in
+time from any bar; the alignment keeps loops in phrase. The count-in is at least one bar, so there
+is always a bar of clicks to count.
+
+**Monitoring feeds master, not a panel.** The exporter taps panel gains, so a monitored mic never
+lands in a file. Capture reads the mic before the monitor gain, so monitor volume never changes a
+take. Browser monitoring adds base and output latency, roughly 10–40 ms, which is why it is off
+by default and the level bar works without it.

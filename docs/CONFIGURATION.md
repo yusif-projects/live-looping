@@ -8,9 +8,11 @@ Per-machine preferences, defined in [state/settings.ts](../src/state/settings.ts
 | --- | --- | --- | --- |
 | `metronomeOn` | `true` | boolean | Clicks while playing. The count-in clicks regardless. |
 | `metronomeVolume` | `0.6` | 0–1 | Click level, which also sets the count-in level |
-| `countInBars` | `1` | 1–4 | Bars of clicks and reference tone before recording starts |
+| `countInBars` | `1` | 1–4 | Bars of count-in when no other loop is recorded. Otherwise a take counts in, for at least a bar, to where it lines up with the existing loops. |
 | `referenceNote` | `69` (A4) | `null`, or MIDI 36–84 (C2–C6) | Tone held through the count-in; `null` is no tone |
 | `referenceVolume` | `0.4` | 0–1 | Reference tone level |
+| `monitorOn` | `false` | boolean | Plays the mic to the output live. Off by default, because through speakers it feeds back. |
+| `monitorVolume` | `0.8` | 0–1 | Monitor level |
 | `cameraId` | `null` | device id or `null` | Camera; `null` or an unplugged device uses the system default |
 | `micId` | `null` | device id or `null` | Microphone, same fallback |
 | `speakerId` | `null` | device id or `null` | Output device, where `AudioContext.setSinkId` exists |

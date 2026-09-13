@@ -6,23 +6,33 @@ tempo, and each panel loops for its own number of bars. Everything stays in your
 ## First run
 
 Put on headphones, then press **Enable camera & microphone** and allow access when the browser
-asks. You'll see one empty panel. The mic records without echo cancellation, so anything
-coming out of speakers ends up in your loops.
+asks. You'll see one empty panel showing your camera. The mic records without echo
+cancellation, so anything coming out of speakers ends up in your loops. Turn **Monitor** on to
+hear the mic in your headphones while you play.
 
 Your loops and settings are saved in this browser and come back the next time you open the page.
 
 ## Recording a loop
 
 1. Set the **Tempo** and **Meter** first. They lock once a loop exists.
-2. Pick the panel's length in bars, and a reference **Tone** if you want one.
+2. Pick the panel's length in bars, and a reference **Tone** if you want one. An empty panel
+   shows your camera, so you can frame the shot before recording.
 3. Press **Record**.
-4. The count-in clicks for the chosen number of bars while the reference note plays. The big
-   number counts down the beats.
+4. The count-in clicks while the reference note plays. The panel shows **Recording in 2 bars**
+   with a dot for each beat, then counts down **4 3 2 1** in the last bar.
 5. The tone stops just before the downbeat, and recording runs for exactly the panel's length.
 6. The loop starts playing right away, in time, and is saved.
 
-If the transport is already playing, the count-in waits for the next bar. Press **Cancel** during
-the count-in or recording to stop the take. A loop you were re-recording comes back.
+**Where a take starts.** A new loop starts where it lines up with the loops already recorded,
+counted from where the longest one begins, so a short loop never waits for a long one to finish:
+- Over a 4-bar loop, a 2-bar loop can start on bar 1 or bar 3 of it, and a 1-bar loop on any bar.
+- A loop longer than the others, such as 8 bars over a 4-bar loop, starts on bar 1 of their cycle.
+- The count-in always lasts at least one full bar. If the next start point is closer than that,
+  the take waits for the one after.
+- With no other loop recorded, the count-in lasts the **Count-in** setting's bars instead.
+
+Press **Cancel** during the count-in or recording to stop the take. A loop you were re-recording
+comes back.
 
 ## Controls
 
@@ -33,11 +43,13 @@ the count-in or recording to stop the take. A loop you were re-recording comes b
 | **Tempo** | Beats per minute; type a value or use − and + |
 | **Meter** | Beats per bar |
 | **Click** On/Off and slider | Metronome while playing, and its volume. The count-in always clicks. |
-| **Count-in** | How many bars count in before recording |
+| **Count-in** | How many bars count in before the first loop. Later takes count in until they line up with the loops already recorded. |
 | **Tone** and slider | The note held through the count-in, and its volume |
 | **Export all** | Saves one video of every loop in a grid |
 | **Clear all** | Deletes every loop and unlocks tempo and meter |
 | **Camera / Microphone / Speaker** | Which device to use. The speaker picker only appears in browsers that support it. |
+| Level bar in the **Microphone** picker | How loud the mic is right now; it turns red close to clipping |
+| **Monitor** On/Off and slider | Plays the mic to your headphones live, and its volume. Off by default. Browsers add a small delay to what you hear. |
 | **Sync** | Calibration sliders; see below |
 | Panel length | The panel's loop length in bars; clear the loop to change it |
 | Panel **Tone** | A different reference note for this panel only |

@@ -35,6 +35,13 @@ describe('parseSettings', () => {
     expect(parseSettings(JSON.stringify({ cameraId: '' })).cameraId).toBeNull()
   })
 
+  it('keeps monitoring off unless it was turned on, and clamps its volume', () => {
+    expect(DEFAULT_SETTINGS.monitorOn).toBe(false)
+    const settings = parseSettings(JSON.stringify({ monitorOn: true, monitorVolume: 7 }))
+    expect(settings.monitorOn).toBe(true)
+    expect(settings.monitorVolume).toBe(1)
+  })
+
   it('round-trips', () => {
     const settings = { ...DEFAULT_SETTINGS, speakerId: 'hdmi', referenceNote: 45, videoOffsetMs: -40 }
     expect(parseSettings(serializeSettings(settings))).toEqual(settings)

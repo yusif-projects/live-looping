@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cycleLabel, loopCycle } from '../state/cycle'
+import { cycleLabel, loopCycle, takeAlignment } from '../state/cycle'
 import type { BarCount, Panel } from '../state/panels'
 import { createPanel } from '../state/panels'
 
@@ -29,5 +29,25 @@ describe('cycleLabel', () => {
     const cycle = { bars: 8, startBar: 3 }
     expect(cycleLabel(3, cycle)).toBe('1 / 8')
     expect(cycleLabel(2, cycle)).toBe('8 / 8')
+  })
+})
+
+describe('takeAlignment', () => {
+  it('has nothing to line up with when no other panel holds a loop', () => {
+    expect(takeAlignment([createPanel('a', 4)], 'a')).toBeNull()
+    expect(takeAlignment([recorded('a', 4, 1)], 'a')).toBeNull()
+  })
+
+  it('starts a shorter loop on its own length, counted from the longest loop’s start', () => {
+    expect(takeAlignment([recorded('a', 4, 1), createPanel('b', 2)], 'b')).toEqual({ anchorBar: 1, stepBars: 2 })
+  })
+
+  it('starts a longer loop on the existing cycle', () => {
+    const panels = [recorded('a', 4, 5), recorded('b', 2, 2), createPanel('c', 8)]
+    expect(takeAlignment(panels, 'c')).toEqual({ anchorBar: 1, stepBars: 4 })
+  })
+
+  it('ignores the loop being re-recorded', () => {
+    expect(takeAlignment([recorded('a', 2, 0), recorded('b', 8, 3)], 'b')).toEqual({ anchorBar: 0, stepBars: 2 })
   })
 })

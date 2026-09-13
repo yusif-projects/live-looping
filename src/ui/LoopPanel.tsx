@@ -16,9 +16,11 @@ interface LoopPanelProps {
   readonly panel: Panel
   readonly number: number
   readonly videoUrl: string | null
-  /** The camera, shown while this panel is recording. */
+  /** The camera, shown while this panel is empty or recording. */
   readonly liveStream: MediaStream | null
   readonly globalNote: number | null
+  /** Beats in a bar: one count-in dot each. */
+  readonly beatsPerBar: number
   readonly recordDisabled: boolean
   readonly canRemove: boolean
   /** An export is running, so nothing that changes loops is allowed. */
@@ -42,9 +44,14 @@ export function LoopPanel(props: LoopPanelProps) {
   const state = panel.stage ?? (panel.take ? 'looping' : 'empty')
   const recordLabel = panel.stage === 'processing' ? 'Saving…' : busy ? 'Cancel' : panel.take ? 'Re-record' : 'Record'
 
+  // Empty and busy panels render the preview in the same place, so pressing Record keeps the
+  // playing element instead of remounting it and flashing black.
+  const live = busy || !panel.take ? props.liveStream : null
   let screen
-  if (busy) {
-    screen = props.liveStream ? <LivePreview stream={props.liveStream} /> : <div className="panel-empty">No camera</div>
+  if (live) {
+    screen = <LivePreview stream={live} />
+  } else if (busy) {
+    screen = <div className="panel-empty">No camera</div>
   } else if (props.videoUrl) {
     screen = (
       <video
@@ -73,7 +80,15 @@ export function LoopPanel(props: LoopPanelProps) {
       <div className="panel-screen">
         {screen}
         {panel.stage && <span className="panel-badge">{STAGE_LABEL[panel.stage]}</span>}
-        <span className="panel-countdown" aria-live="off" />
+        <div className="panel-countdown" hidden={panel.stage !== 'countIn'} aria-live="off">
+          <span className="countdown-label" />
+          <span className="countdown-beat" />
+          <span className="countdown-dots">
+            {Array.from({ length: props.beatsPerBar }, (_, i) => (
+              <i key={i} />
+            ))}
+          </span>
+        </div>
         <div className="panel-progress" aria-hidden="true" />
       </div>
 

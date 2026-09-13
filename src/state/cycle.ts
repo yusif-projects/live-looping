@@ -1,6 +1,7 @@
 // The loop cycle the transport readout counts through, so it wraps instead of counting forever.
 
-import { lcm, mod } from '../lib/math'
+import type { TakeAlignment } from '../audio/transport'
+import { gcd, lcm, mod } from '../lib/math'
 import { exportBars, exportStartBar } from './exportPlan'
 import type { Panel } from './panels'
 
@@ -24,4 +25,17 @@ export function loopCycle(panels: readonly Panel[]): Cycle {
 /** 1-based bar within the cycle for a 0-based grid bar, e.g. "3 / 8". */
 export function cycleLabel(gridBar: number, cycle: Cycle): string {
   return `${mod(gridBar - cycle.startBar, cycle.bars) + 1} / ${cycle.bars}`
+}
+
+/**
+ * Where a new take on `panelId` may start so it lines up with the other recorded loops: every
+ * `gcd(its length, their cycle)` bars from where the longest one begins. A 2-bar take over a
+ * 4-bar loop starts on either half of it; an 8-bar take on the 4-bar loop's first bar. Null with
+ * nothing else to line up with. The panel's own take is left out, because re-recording replaces it.
+ */
+export function takeAlignment(panels: readonly Panel[], panelId: string): TakeAlignment | null {
+  const panel = panels.find((p) => p.id === panelId)
+  const others = panels.flatMap((p) => (p.take && p.id !== panelId ? [p.take] : []))
+  if (!panel || others.length === 0) return null
+  return { anchorBar: exportStartBar(others), stepBars: gcd(panel.bars, exportBars(others)) }
 }

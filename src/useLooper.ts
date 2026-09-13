@@ -4,9 +4,10 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AudioEngine } from './audio/engine'
+import { isHot, meterLevel, smoothLevel } from './audio/level'
 import type { TakeHandle } from './audio/recorder'
 import { recordTake, toAudioBuffer } from './audio/recorder'
-import type { Meter, TakePlan } from './audio/transport'
+import type { CountInDisplay, Meter, TakePlan } from './audio/transport'
 import {
   DEFAULT_BEATS_PER_BAR,
   DEFAULT_TEMPO,
@@ -15,9 +16,9 @@ import {
   MIN_BEATS_PER_BAR,
   MIN_TEMPO,
   barPosition,
+  countInDisplay,
   loopOffset,
   secondsPerBar,
-  secondsPerBeat,
 } from './audio/transport'
 import { clamp } from './lib/math'
 import type { DeviceLists } from './media/devices'
@@ -34,7 +35,7 @@ import {
 } from './media/devices'
 import { exportPanels, saveBlob } from './media/exporter'
 import { SEEK_THRESHOLD_SECONDS, correctVideo, expectedClipTime } from './media/videoSync'
-import { cycleLabel, loopCycle } from './state/cycle'
+import { cycleLabel, loopCycle, takeAlignment } from './state/cycle'
 import type { BarCount, Panel, TakeMeta } from './state/panels'
 import { MAX_PANELS, busyPanel, createPanel, isMeterLocked, panelsReducer } from './state/panels'
 import type { Settings } from './state/settings'
@@ -80,21 +81,32 @@ function readStoredSettings(): Settings {
 
 const timestamp = (): string => new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
 
-function paintPanel(root: HTMLElement, panel: Panel, heard: number, origin: number | null, meter: Meter, plan: TakePlan | null) {
+function setText(el: Element | null, text: string) {
+  if (el && el.textContent !== text) el.textContent = text
+}
+
+function paintCountIn(root: HTMLElement, display: CountInDisplay) {
   const countdown = root.querySelector<HTMLElement>('.panel-countdown')
+  if (!countdown) return
+  setText(countdown.querySelector('.countdown-label'), `Recording in ${display.barsLeft} ${display.barsLeft === 1 ? 'bar' : 'bars'}`)
+  setText(countdown.querySelector('.countdown-beat'), display.beatsLeft === null ? '' : String(display.beatsLeft))
+  // toggleAttribute leaves the DOM alone when the attribute is already in that state.
+  countdown.toggleAttribute('data-final', display.beatsLeft !== null)
+  countdown.querySelectorAll('.countdown-dots i').forEach((dot, i) => {
+    dot.toggleAttribute('data-on', display.beat !== null && i <= display.beat)
+  })
+}
+
+function paintPanel(root: HTMLElement, panel: Panel, heard: number, origin: number | null, meter: Meter, plan: TakePlan | null) {
   let progress = 0
-  let beatsLeft: number | null = null
   if (origin !== null && plan) {
-    if (heard < plan.recordStart) beatsLeft = Math.max(1, Math.ceil((plan.recordStart - heard) / secondsPerBeat(meter.tempo)))
+    const countIn = countInDisplay(heard, plan, meter)
+    if (countIn) paintCountIn(root, countIn)
     else progress = clamp((heard - plan.recordStart) / (plan.recordEnd - plan.recordStart), 0, 1)
   } else if (origin !== null && panel.take) {
     progress = loopOffset(heard, origin, meter, panel.take.startBar, panel.take.bars) / (panel.take.bars * secondsPerBar(meter))
   }
   root.style.setProperty('--progress', progress.toFixed(4))
-  if (countdown) {
-    const text = beatsLeft === null ? '' : String(beatsLeft)
-    if (countdown.textContent !== text) countdown.textContent = text
-  }
 }
 
 function syncVideo(video: HTMLVideoElement, take: TakeMeta, heard: number, origin: number | null, meter: Meter, videoShift: number) {
@@ -141,6 +153,7 @@ export function useLooper() {
   const videoEls = useRef(new Map<string, HTMLVideoElement>())
   const panelEls = useRef(new Map<string, HTMLElement>())
   const beatDisplayRef = useRef<HTMLElement | null>(null)
+  const levelRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     panelsRef.current = panels
@@ -159,6 +172,9 @@ export function useLooper() {
   useEffect(() => {
     engineRef.current?.setMetronome(settings.metronomeOn, settings.metronomeVolume)
   }, [phase, settings.metronomeOn, settings.metronomeVolume])
+  useEffect(() => {
+    engineRef.current?.setMonitor(settings.monitorOn, settings.monitorVolume)
+  }, [phase, settings.monitorOn, settings.monitorVolume])
   useEffect(() => {
     const engine = engineRef.current
     if (engine) for (const panel of panels) engine.setMix(panel.id, panel.volume, panel.muted)
@@ -258,6 +274,7 @@ export function useLooper() {
   useEffect(() => {
     if (phase !== 'ready') return
     let frame = 0
+    let level = 0
     const tick = () => {
       frame = requestAnimationFrame(tick)
       const engine = engineRef.current
@@ -265,6 +282,13 @@ export function useLooper() {
       const origin = engine.gridOrigin
       const meter = engine.currentMeter
       const heard = engine.heardTime()
+      const levelBar = levelRef.current
+      if (levelBar) {
+        level = smoothLevel(level, meterLevel(engine.inputPeak()))
+        const value = level.toFixed(3)
+        if (levelBar.style.getPropertyValue('--level') !== value) levelBar.style.setProperty('--level', value)
+        levelBar.toggleAttribute('data-hot', isHot(level))
+      }
       const display = beatDisplayRef.current
       if (display) {
         const cycle = loopCycle(panelsRef.current)
@@ -384,6 +408,7 @@ export function useLooper() {
             panelId,
             bars: panel.bars,
             countInBars: s.countInBars,
+            alignment: takeAlignment(panelsRef.current, panelId),
             referenceNote: panel.noteOverride ?? s.referenceNote,
             referenceVolume: s.referenceVolume,
             latencyOffsetMs: s.latencyOffsetMs,
@@ -581,6 +606,9 @@ export function useLooper() {
     registerVideo,
     registerPanel,
     registerBeatDisplay,
+    registerLevel: useCallback((el: HTMLElement | null) => {
+      levelRef.current = el
+    }, []),
   }
 }
 

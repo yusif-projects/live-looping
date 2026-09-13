@@ -1,11 +1,12 @@
 // The AudioContext and everything scheduled on it: transport, metronome, reference tone,
-// loop players, and the mic capture tap. The context clock is the master clock for the
-// whole app. Video and UI read from it and never the other way round.
+// loop players, and the mic's capture tap, monitor and level meter. The context clock is the
+// master clock for the whole app. Video and UI read from it and never the other way round.
 
 import type { TakeMeta } from '../state/panels'
 import captureWorkletUrl from './capture.worklet.ts?worker&url'
 import type { CaptureCommand } from './captureProtocol'
 import { CAPTURE_PROCESSOR_NAME } from './captureProtocol'
+import { peakOf } from './level'
 import { noteFrequency } from './notes'
 import type { CaptureChunk } from './take'
 import { MAX_CAPTURE_CHANNELS } from './take'
@@ -37,6 +38,12 @@ const TONE_GUARD_SECONDS = 0.02
 /** Smoothing for volume changes. An instant gain jump clicks. */
 const GAIN_SMOOTHING_SECONDS = 0.015
 
+/**
+ * Samples the input meter reads per frame. A power of two, as AnalyserNode requires, and longer
+ * than a 60 Hz frame at 44.1 kHz and up, so no peak falls between two reads.
+ */
+const LEVEL_WINDOW_SAMPLES = 1024
+
 interface Player {
   readonly gain: GainNode
   buffer: AudioBuffer | null
@@ -52,6 +59,9 @@ export class AudioEngine {
   private readonly clickBus: GainNode
   private readonly captureNode: AudioWorkletNode
   private input: MediaStreamAudioSourceNode | null = null
+  private readonly monitor: GainNode
+  private readonly analyser: AnalyserNode
+  private readonly levelSamples: Float32Array<ArrayBuffer>
   private meter: Meter
   private origin: number | null = null
   private nextBeat = 0
@@ -69,6 +79,14 @@ export class AudioEngine {
     this.master.connect(context.destination)
     this.clickBus = context.createGain()
     this.clickBus.connect(this.master)
+    // The mic reaches the output only through this gain, silent until monitoring is on. It feeds
+    // master rather than a panel's gain, so the exporter, which taps panel gains, never records it.
+    this.monitor = context.createGain()
+    this.monitor.gain.value = 0
+    this.monitor.connect(this.master)
+    this.analyser = context.createAnalyser()
+    this.analyser.fftSize = LEVEL_WINDOW_SAMPLES
+    this.levelSamples = new Float32Array(LEVEL_WINDOW_SAMPLES)
 
     this.captureNode = new AudioWorkletNode(context, CAPTURE_PROCESSOR_NAME, {
       numberOfInputs: 1,
@@ -83,6 +101,8 @@ export class AudioEngine {
     const sink = context.createGain()
     sink.gain.value = 0
     this.captureNode.connect(sink).connect(context.destination)
+    // The analyser is kept pulled the same way, so the level meter never freezes.
+    this.analyser.connect(sink)
   }
 
   static async create(meter: Meter): Promise<AudioEngine> {
@@ -129,6 +149,19 @@ export class AudioEngine {
     this.input?.disconnect()
     this.input = stream && stream.getAudioTracks().length > 0 ? this.context.createMediaStreamSource(stream) : null
     this.input?.connect(this.captureNode)
+    this.input?.connect(this.monitor)
+    this.input?.connect(this.analyser)
+  }
+
+  setMonitor(on: boolean, volume: number): void {
+    this.monitor.gain.setTargetAtTime(on ? volume : 0, this.context.currentTime, GAIN_SMOOTHING_SECONDS)
+  }
+
+  /** Peak amplitude of the most recent input window, 0 with no mic. */
+  inputPeak(): number {
+    if (!this.input) return 0
+    this.analyser.getFloatTimeDomainData(this.levelSamples)
+    return peakOf(this.levelSamples)
   }
 
   /**

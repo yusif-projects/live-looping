@@ -13,7 +13,7 @@ import {
   secondsToFrames,
   sliceTake,
 } from './take'
-import type { TakePlan } from './transport'
+import type { TakeAlignment, TakePlan } from './transport'
 import { planTake, secondsPerBar } from './transport'
 
 /** Video keeps recording this long past the loop's end, so a slow camera can't leave the last frames out of the clip. */
@@ -28,6 +28,8 @@ export interface TakeRequest {
   readonly panelId: string
   readonly bars: BarCount
   readonly countInBars: number
+  /** Where the other loops let this take start, or null to count in `countInBars`. */
+  readonly alignment: TakeAlignment | null
   readonly referenceNote: number | null
   readonly referenceVolume: number
   readonly latencyOffsetMs: number
@@ -110,7 +112,14 @@ export function recordTake(
   const { context } = engine
   const meter = engine.currentMeter
   const rate = engine.sampleRate
-  const plan = planTake(context.currentTime, engine.gridOrigin, meter, request.countInBars, request.bars)
+  const plan = planTake(
+    context.currentTime,
+    engine.gridOrigin,
+    meter,
+    request.countInBars,
+    request.bars,
+    request.alignment,
+  )
 
   if (!engine.running) engine.start(plan.origin)
   engine.pauseLoop(request.panelId)

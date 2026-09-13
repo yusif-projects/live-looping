@@ -109,11 +109,14 @@ working tree is the source of truth, not the version an earlier turn produced.
 ## Repo conventions
 
 **Never push to a remote without asking first.** Commit locally when asked, then
-stop and ask — pushing is outward-facing and `main` publishes. The one exception
+stop and ask — pushing is outward-facing. The one exception
 is the `ship` skill: invoking `/ship` *is* the permission to stage, commit, and
 push. Permission for one push does not carry to the next.
 
-`main` deploys to production on push — branch for anything not ready to publish.
+GitHub Pages deploys are paused: a push to `main` deploys nothing until the push
+trigger in `deploy.yml` is restored — see
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Once it is, `main` deploys to
+production on push, so branch for anything not ready to publish.
 
 **Commit messages follow [Conventional Commits](https://www.conventionalcommits.org).**
 The `commit-msg` hook rejects anything else, and so does CI on a pull request.

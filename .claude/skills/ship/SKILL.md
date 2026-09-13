@@ -148,8 +148,10 @@ and let them choose.
 
 ## Pushing to `main` deploys the site
 
-`.github/workflows/deploy.yml` runs on every push to `main` and publishes to
-GitHub Pages, and tags a release. There is no staging environment.
+`.github/workflows/deploy.yml` publishes to GitHub Pages and tags a release.
+There is no staging environment. Its push trigger is commented out for now, so
+a push to `main` deploys nothing — check the `on:` block before claiming one
+does. Treat `main` as production anyway; the guard below still applies.
 
 So when the current branch is `main`:
 
@@ -162,5 +164,6 @@ On any other branch, push freely — nothing deploys.
 
 ## Report back
 
-One line: the commit subject, the branch, and — if it was `main` — that a deploy
-is now running. Link the Actions run if you have it.
+One line: the commit subject, the branch, and — if it was `main` and the push
+trigger is active — that a deploy is now running. Link the Actions run if you
+have it.

@@ -71,7 +71,8 @@ ship it
 ```
 
 **Why this repo needs it.** A push to `main` is a production deploy through
-[deploy.yml](../.github/workflows/deploy.yml). So `ship` runs the checks locally
+[deploy.yml](../.github/workflows/deploy.yml) — paused for now, see
+[deployment](DEPLOYMENT.md), but the guard stays. So `ship` runs the checks locally
 and asks for confirmation before pushing to `main`, while pushing freely on any
 other branch.
 

@@ -10,8 +10,7 @@ npm run build      # the real gate — typecheck + bundle
 ```
 
 CI runs all four on every pull request
-([ci.yml](../.github/workflows/ci.yml)), and again on the push to `main` that
-deploys. Both call the same composite action,
+([ci.yml](../.github/workflows/ci.yml)), and again whenever the deploy runs. Both call the same composite action,
 [.github/actions/build](../.github/actions/build/action.yml), so what runs in CI
 is exactly the list above — running it locally first just fails you faster.
 
@@ -65,8 +64,9 @@ numbers inline. Tuning happens by editing one named value.
 
 ## Repository conventions
 
-Work on `main` deploys immediately. Branch for anything you are not ready to
-publish.
+Deploys are paused for now, so a push to `main` publishes nothing — see
+[deployment](DEPLOYMENT.md). Once they are back on, work on `main` deploys
+immediately. Branch for anything you are not ready to publish.
 
 ### Commit messages
 
@@ -100,7 +100,7 @@ describes the user-visible change rather than the files touched, has no
 trailing period, and keeps the whole header under 72 characters.
 
 **The format decides the next version.** The deploy tags a release on every push
-to `main`, and [scripts/next-version.mjs](../scripts/next-version.mjs) reads the
+to `main` (once deploys are back on), and [scripts/next-version.mjs](../scripts/next-version.mjs) reads the
 commits to pick the number: `feat` → minor, `!` or a `BREAKING CHANGE:` footer →
 major, everything else → patch. See [deployment](DEPLOYMENT.md#releases).
 

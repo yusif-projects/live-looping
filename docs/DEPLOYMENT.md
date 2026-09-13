@@ -8,12 +8,18 @@ The app is static: `npm run build` writes `dist/`, and GitHub Pages serves it.
 | --- | --- | --- |
 | [ci.yml](../.github/workflows/ci.yml) | Pull request | Lint, typecheck, build, test |
 | [commits.yml](../.github/workflows/commits.yml) | Pull request | Checks every commit on the branch is a Conventional Commit |
-| [deploy.yml](../.github/workflows/deploy.yml) | Push to `main`, or manual | Same checks, then publishes `dist/` to Pages and tags a release |
+| [deploy.yml](../.github/workflows/deploy.yml) | Manual only, for now | Same checks, then publishes `dist/` to Pages; tags a release when push-triggered |
 | [release.yml](../.github/workflows/release.yml) | A `v*` tag pushed by hand | Builds and attaches a zip of `dist/` to a release |
 
 Every workflow installs and checks through one composite action,
 [.github/actions/build](../.github/actions/build/action.yml), so CI, the deploy
 and a release all run the same steps.
+
+**Deploys are paused.** The `push` trigger in `deploy.yml` is commented out
+until the site is ready to publish, so a push to `main` runs nothing and no
+release is tagged. Uncomment it to turn automatic deploys back on. A site
+deployed before the pause stays live until Pages is unpublished in the repo
+settings.
 
 **One-time setup:** in the GitHub repo, *Settings → Pages → Source* must be
 **GitHub Actions**, or the deploy job fails.
@@ -23,7 +29,7 @@ TODO: custom domain — add `public/CNAME` and document it here.
 ## Releases
 
 The `tag` job in `deploy.yml` runs after every push-triggered deploy that
-reached the site. [scripts/next-version.mjs](../scripts/next-version.mjs) reads
+reached the site — none while deploys are paused. [scripts/next-version.mjs](../scripts/next-version.mjs) reads
 the commits since the last `v*` tag and picks the bump:
 
 | Commits since the last tag include | Bump |

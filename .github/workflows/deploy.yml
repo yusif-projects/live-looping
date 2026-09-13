@@ -1,8 +1,11 @@
 name: Deploy to GitHub Pages
 
+# Push-to-main deploys are paused until the site is ready to publish — restore
+# the push trigger below to turn them back on. Until then nothing reaches
+# Pages unless the workflow is run by hand, and the tag job never runs.
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch:
     inputs:
       ref:
